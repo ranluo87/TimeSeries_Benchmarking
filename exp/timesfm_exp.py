@@ -28,10 +28,10 @@ def get_model(load_weights: bool = False):
     hparams = TimesFmHparams(
         backend="cpu",
         per_core_batch_size=32,
-        horizon_len=128,
+        horizon_len=24,
         num_layers=50,
         use_positional_embedding=False,
-        context_len=256
+        context_len=96,
     )
 
     tfm = TimesFm(
@@ -57,13 +57,13 @@ if __name__ == "__main__":
     model, hparams, tfm = get_model(load_weights=False)
     config = FinetuningConfig(
         batch_size=128,
-        num_epochs=10,
+        num_epochs=100,
         learning_rate=1e-4,
         use_wandb=False,
         freq_type=0,
         log_every_n_steps=10,
         val_check_interval=0.5,
-        use_quantile_loss=True
+        use_quantile_loss=False
     )
 
     train_dataset = UnivariateMethaneHourly(args, "train")

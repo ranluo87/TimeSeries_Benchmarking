@@ -19,9 +19,9 @@ class UnivariateMethaneHourly(Dataset):
         self.seq_len = args.seq_len
         self.pred_len = args.pred_len
 
-        if args.freq_type not in [0, 1, 2]:
-            raise ValueError("freq_type must be 0, 1, or 2")
-        self.freq_type = args.freq_type
+        # if args.freq_type not in [0, 1, 2]:
+        #     raise ValueError("freq_type must be 0, 1, or 2")
+        # self.freq_type = args.freq_type
 
         self.scaler = MinMaxScaler()
         # init
@@ -50,14 +50,18 @@ class UnivariateMethaneHourly(Dataset):
     def _slicing_data(self):
         self.features = []
         self.targets = []
+        self.target_datestamp = []
 
         for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len, self.pred_len)):
             self.features.append(self.data[i:i + self.seq_len])
             self.targets.append(self.data[i + self.seq_len:i + self.seq_len + self.pred_len])
 
+            date_string = self.indices[i + self.seq_len:i + self.seq_len + self.pred_len][0]
+            self.target_datestamp.append(date_string)
+
         self.features = np.array(self.features)
         self.targets = np.array(self.targets)
-
+        self.target_datestamp = np.array(self.target_datestamp)
 
     def __len__(self):
         return len(self.features)
@@ -66,9 +70,6 @@ class UnivariateMethaneHourly(Dataset):
         return self.scaler.inverse_transform(data)
 
     def __getitem__(self, index):
-        x_context = torch.tensor(self.features[index], dtype=torch.float32)
-        y_target = torch.tensor(self.targets[index], dtype=torch.float32)
-
-        input_padding = torch.zeros_like(x_context)
-        freq = torch.tensor([self.freq_type], dtype=torch.long)
-        return x_context, input_padding, freq, y_target
+        # input_padding = torch.zeros_like(x_context)
+        # freq = torch.tensor([self.freq_type], dtype=torch.long)
+        return self.features[index], self.targets[index]

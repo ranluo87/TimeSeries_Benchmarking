@@ -1,11 +1,14 @@
 import os
 import torch
+import torch.nn as nn
 
 
 class Exp_Basic(object):
     def __init__(self, args):
         self.args = args
         self.device = self._acquire_device()
+        self.model = self._build_model().to(self.device)
+        self.criterion = nn.MSELoss(reduction='mean')
 
     def _build_model(self):
         raise NotImplementedError
