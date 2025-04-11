@@ -52,11 +52,12 @@ class UnivariateMethaneHourly(Dataset):
         self.targets = []
         self.target_datestamp = []
 
-        for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len, self.pred_len)):
-            self.features.append(self.data[i:i + self.seq_len])
-            self.targets.append(self.data[i + self.seq_len:i + self.seq_len + self.pred_len])
+        for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len + 1, self.pred_len)):
+            end_idx = i + self.seq_len
+            self.features.append(self.data[i:end_idx])
+            self.targets.append(self.data[end_idx:end_idx + self.pred_len])
 
-            date_string = self.indices[i + self.seq_len:i + self.seq_len + self.pred_len][0]
+            date_string = self.indices[end_idx:end_idx + self.pred_len]
             self.target_datestamp.append(date_string)
 
         self.features = np.array(self.features)
