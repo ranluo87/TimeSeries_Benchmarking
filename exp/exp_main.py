@@ -10,7 +10,9 @@ from dataloader.dataloader import UnivariateMethaneHourly
 from models import RNN
 
 import warnings
+
 warnings.filterwarnings("ignore")
+
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -75,7 +77,7 @@ class Exp_Main(Exp_Basic):
                     epoch_val_loss.append(val_step_loss.item())
 
             pbar.set_postfix({
-                "Epoch": epoch+1,
+                "Epoch": epoch + 1,
                 "Training Loss": np.average(epoch_loss),
                 "Validation Loss": np.average(epoch_val_loss)
             })
@@ -116,7 +118,7 @@ class Exp_Main(Exp_Basic):
         dates = test_dataset.target_datestamp[:, 0]
 
         test_df = pd.DataFrame({
-            'dates': np.array(dates),
+            'date': np.array(dates),
             'pred': np.array(preds),
             'true': np.array(trues),
         })
@@ -126,5 +128,4 @@ class Exp_Main(Exp_Basic):
 
         rmse = np.sqrt(mse)
 
-        return test_df, mae, rmse,
-
+        return test_df, mae, rmse

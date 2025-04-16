@@ -19,10 +19,10 @@ class Exp_Basic(object):
         if self.args.use_gpu:
             os.environ["CUDA_VISIBLE_DEVICES"] = str(0)
             device = torch.device('cuda:{}'.format(0))
-            # print('Use GPU: cuda:{}'.format(self.args.gpu))
+            print('Use GPU: {}'.format(device))
         else:
             device = torch.device('cpu')
-            # print('Use CPU')
+            print('Use CPU')
 
         return device
 

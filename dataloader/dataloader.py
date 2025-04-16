@@ -19,9 +19,11 @@ class UnivariateMethaneHourly(Dataset):
         self.seq_len = args.seq_len
         self.pred_len = args.pred_len
 
-        # if args.freq_type not in [0, 1, 2]:
-        #     raise ValueError("freq_type must be 0, 1, or 2")
-        # self.freq_type = args.freq_type
+        self.timesfm = args.timesfm
+        if self.timesfm:
+            if args.freq_type not in [0, 1, 2]:
+                raise ValueError("freq_type must be 0, 1, or 2")
+            self.freq_type = args.freq_type
 
         self.scaler = MinMaxScaler()
         # init
@@ -57,8 +59,8 @@ class UnivariateMethaneHourly(Dataset):
             self.features.append(self.data[i:end_idx])
             self.targets.append(self.data[end_idx:end_idx + self.pred_len])
 
-            date_string = self.indices[end_idx:end_idx + self.pred_len]
-            self.target_datestamp.append(date_string)
+            date_strings = self.indices[end_idx:end_idx + self.pred_len]
+            self.target_datestamp.append(date_strings)
 
         self.features = np.array(self.features)
         self.targets = np.array(self.targets)
@@ -73,4 +75,13 @@ class UnivariateMethaneHourly(Dataset):
     def __getitem__(self, index):
         # input_padding = torch.zeros_like(x_context)
         # freq = torch.tensor([self.freq_type], dtype=torch.long)
-        return self.features[index], self.targets[index]
+        if self.timesfm:
+            x_context = torch.tensor(self.features[index], dtype=torch.float32)
+            x_future = torch.tensor(self.targets[index], dtype=torch.float32)
+
+            input_padding = torch.zeros_like(x_context)
+            freq = torch.tenor([self.freq_type], dtype=torch.long)
+
+            return x_context, input_padding, freq, x_future
+        else:
+            return self.features[index], self.targets[index]
