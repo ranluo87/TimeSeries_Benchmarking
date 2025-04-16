@@ -21,7 +21,7 @@ parser.add_argument('--hidden_size', type=int, default=256, help='prediction len
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
 parser.add_argument('--model', type=str, default='RNN',
                     help='model name, options: [TimeMixer, TimesNet, iTransformer, RNN, MultiVar_RNN, T2V_Seq2Seq]')
-parser.add_argument('--rnn_model', type=str, default='LSTM',
+parser.add_argument('--rnn_model', type=str, default='GRU',
                     help='RNN model names, options=[LSTM, GRU]')
 
 # Prediction Task
@@ -74,27 +74,24 @@ if __name__ == '__main__':
 
         exp = Exp_Main(args)
         _, t_loss, v_loss = exp.train()
-        test_df, mse, mae = exp.test()
-        rmse = np.sqrt(mse)
+
+        loss_df = pd.DataFrame({
+            "Train Loss": t_loss,
+            "Validation Loss": v_loss,
+        })
+
+        loss_path = os.path.join(output_dir, "{} Loss.csv".format(station_name))
+        loss_df.to_csv(loss_path, index=False)
+
+        test_df, mae, rmse = exp.test()
+
+        test_fit_path = os.path.join(output_dir, "{} Test Fitting.csv".format(station_name))
+        test_df.to_csv(test_fit_path, index=False)
 
         evaluations["Station"].append(station_name)
         evaluations["MAE"].append(mae)
         evaluations["RMSE"].append(rmse)
 
-        train_loss_df = pd.DataFrame({
-            "Train Loss": t_loss,
-            "Validation Loss": v_loss,
-        })
-
-        train_loss_path = os.path.join(output_dir, "train_loss_{}.csv".format(station_name))
-        train_loss_df.to_csv(train_loss_path, index=False)
-
-        output_path = os.path.join(output_dir, "{} Test Fitting.csv".format(station_name))
-        test_df.to_csv(output_path, index=False)
-
     eval_df = pd.DataFrame(evaluations)
-    eval_path = os.path.join(output_dir, "{} Loss.csv".format(args.rnn_model))
+    eval_path = os.path.join(output_dir, "{} evaluations.csv".format(args.rnn_model))
     eval_df.to_csv(eval_path, index=False)
-
-    print("test")
-

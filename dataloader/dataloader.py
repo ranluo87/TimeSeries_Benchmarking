@@ -52,7 +52,7 @@ class UnivariateMethaneHourly(Dataset):
         self.targets = []
         self.target_datestamp = []
 
-        for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len + 1, self.pred_len)):
+        for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len + 1)):
             end_idx = i + self.seq_len
             self.features.append(self.data[i:end_idx])
             self.targets.append(self.data[end_idx:end_idx + self.pred_len])

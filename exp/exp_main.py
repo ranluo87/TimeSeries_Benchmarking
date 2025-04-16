@@ -93,7 +93,7 @@ class Exp_Main(Exp_Basic):
 
         preds = []
         trues = []
-        indices = []
+
         self.model.eval()
         with torch.no_grad():
             for i, (batch_x, batch_y) in enumerate(test_dataloader):
@@ -105,22 +105,26 @@ class Exp_Main(Exp_Basic):
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
 
+                # [batch_size, pred_len]
                 pred = test_dataset.inverse_transform(outputs)
                 true = test_dataset.inverse_transform(batch_y)
 
-                preds.append(pred.flatten())
-                trues.append(true.flatten())
+                for batch in range(batch_x.shape[0]):
+                    preds.append(pred[batch][-1])
+                    trues.append(true[batch][-1])
 
-        preds = np.hstack(preds)
-        trues = np.hstack(trues)
+        dates = test_dataset.target_datestamp[:, 0]
+
+        test_df = pd.DataFrame({
+            'dates': np.array(dates),
+            'pred': np.array(preds),
+            'true': np.array(trues),
+        })
 
         mse = mean_squared_error(trues, preds)
         mae = mean_absolute_error(trues, preds)
 
-        test_df = pd.DataFrame({
-            'pred': preds,
-            'true': trues,
-        })
+        rmse = np.sqrt(mse)
 
-        return test_df, mse, mae,
+        return test_df, mae, rmse,
 
