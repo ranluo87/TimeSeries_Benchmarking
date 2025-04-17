@@ -58,6 +58,7 @@ class Exp_Main(Exp_Basic):
                 batch_y = batch_y.float().squeeze().to(self.device)
 
                 output_y = self.model(batch_x)
+
                 step_loss = self.criterion(output_y, batch_y)
 
                 epoch_loss.append(step_loss.item())
@@ -73,6 +74,7 @@ class Exp_Main(Exp_Basic):
                     batch_y_val = batch_y_val.float().squeeze().to(self.device)
 
                     output_y_val = self.model(batch_x_val)
+
                     val_step_loss = self.criterion(output_y_val, batch_y_val)
                     epoch_val_loss.append(val_step_loss.item())
 

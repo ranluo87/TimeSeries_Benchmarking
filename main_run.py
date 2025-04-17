@@ -13,15 +13,15 @@ parser = argparse.ArgumentParser()
 
 # Optimization
 parser.add_argument('--epochs', type=int, default=100, help='train epochs')
-parser.add_argument('--learning_rate', type=float, default=1e-4, help='optimizer learning rate')
-parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-parser.add_argument('--hidden_size', type=int, default=256, help='prediction length')
+parser.add_argument('--learning_rate', type=float, default=5e-4, help='optimizer learning rate')
+parser.add_argument('--batch_size', type=int, default=128, help='batch size')
+parser.add_argument('--hidden_size', type=int, default=48, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
 parser.add_argument('--model', type=str, default='RNN',
                     help='model name, options: [TimeMixer, TimesNet, iTransformer, RNN, MultiVar_RNN, T2V_Seq2Seq]')
-parser.add_argument('--rnn_model', type=str, default='LSTM',
+parser.add_argument('--rnn_model', type=str, default='GRU',
                     help='RNN model names, options=[LSTM, GRU]')
 parser.add_argument('--timesfm', type=bool, default=False, help='TimesFM specific datasets')
 # Prediction Task
@@ -40,10 +40,15 @@ def update_args_(params):
 
 
 def objective(trial):
+    # params = {
+    #     'hidden_size': trial.suggest_categorical('hidden_size', [128, 256]),
+    #     'batch_size': trial.suggest_categorical('batch_size', [64, 128]),
+    # }
     params = {
-        'hidden_size': trial.suggest_categorical('hidden_size', [128, 256]),
-        'batch_size': trial.suggest_categorical('batch_size', [64, 128]),
-        'seq_len': trial.suggest_categorical('seq_len', [96, 168]),
+        'learning_rate': trial.suggest_float('learning_rate', 1e-4, 5e-4),
+        'batch_size': trial.suggest_categorical('batch_size', [32, 64, 128]),
+        # 'epochs': trial.suggest_int('epochs', 50, 100, 25),
+        'hidden_size': trial.suggest_int('hidden_size', 16, 64, 16)
     }
 
     update_args_(params)
@@ -57,7 +62,7 @@ def objective(trial):
 if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": []}
 
-    output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
+    output_dir = "/home/ranluo/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
     os.makedirs(output_dir, exist_ok=True)
 
     for file in os.listdir(args.data_dir):
@@ -68,7 +73,7 @@ if __name__ == '__main__':
         station_name = file.split(".")[0]
 
         study = optuna.create_study(study_name=station_name, direction='minimize')
-        study.optimize(objective, n_trials=10)
+        study.optimize(objective, n_trials=20)
 
         print(study.best_params)
         update_args_(study.best_params)
