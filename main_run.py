@@ -8,14 +8,16 @@ import argparse
 import optuna
 import numpy as np
 import os
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 parser = argparse.ArgumentParser()
 
 # Optimization
 parser.add_argument('--epochs', type=int, default=100, help='train epochs')
-parser.add_argument('--learning_rate', type=float, default=5e-4, help='optimizer learning rate')
-parser.add_argument('--batch_size', type=int, default=128, help='batch size')
-parser.add_argument('--hidden_size', type=int, default=48, help='hidden size')
+parser.add_argument('--learning_rate', type=float, default=1e-4, help='optimizer learning rate')
+parser.add_argument('--batch_size', type=int, default=64, help='batch size')
+parser.add_argument('--hidden_size', type=int, default=32, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
@@ -25,7 +27,7 @@ parser.add_argument('--rnn_model', type=str, default='GRU',
                     help='RNN model names, options=[LSTM, GRU]')
 parser.add_argument('--timesfm', type=bool, default=False, help='TimesFM specific datasets')
 # Prediction Task
-parser.add_argument('--seq_len', type=int, default=96)
+parser.add_argument('--seq_len', type=int, default=512)
 parser.add_argument('--pred_len', type=int, default=24)
 parser.add_argument('--freq_type', type=int, default=0)
 
@@ -45,10 +47,10 @@ def objective(trial):
     #     'batch_size': trial.suggest_categorical('batch_size', [64, 128]),
     # }
     params = {
-        'learning_rate': trial.suggest_float('learning_rate', 1e-4, 5e-4),
-        'batch_size': trial.suggest_categorical('batch_size', [32, 64, 128]),
-        # 'epochs': trial.suggest_int('epochs', 50, 100, 25),
-        'hidden_size': trial.suggest_int('hidden_size', 16, 64, 16)
+        'learning_rate': trial.suggest_float('learning_rate', 1e-5, 1e-4),
+        'batch_size': trial.suggest_categorical('batch_size', [32, 64]),
+        'seq_len': trial.suggest_int('seq_len', 512, 1024, 128),
+        'hidden_size': trial.suggest_categorical('hidden_size', [16, 32, 64])
     }
 
     update_args_(params)
@@ -62,7 +64,7 @@ def objective(trial):
 if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": []}
 
-    output_dir = "/home/ranluo/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
+    output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
     os.makedirs(output_dir, exist_ok=True)
 
     for file in os.listdir(args.data_dir):
@@ -86,12 +88,36 @@ if __name__ == '__main__':
             "Validation Loss": v_loss,
         })
 
-        loss_path = os.path.join(output_dir, "{} Train Loss.csv".format(station_name))
-        loss_df.to_csv(loss_path, index=False)
+        loss_path = os.path.join(output_dir, "{}.html".format(station_name))
+        # loss_df.to_csv(loss_path, index=False)
+
+        fig = make_subplots(rows=1, cols=2, title=station_name,
+                            subplot_titles=('Loss', 'Predictions'))
+
+        fig.add_trace(
+            go.Scatter(x=loss_df.index, y=loss_df['Train Loss'], mode='lines', name='Train Loss'),
+            row=1, col=1
+        )
+        fig.add_trace(
+            go.Scatter(x=loss_df.index, y=loss_df['Validation Loss'], mode='lines', name='Validation Loss'),
+            row=1, col=1
+        )
 
         test_df, mae, rmse = exp.test()
         test_path = os.path.join(output_dir, "{} Test Fitting.csv".format(station_name))
         test_df.to_csv(test_path, index=False)
+
+        fig.add_trace(
+            go.Scatter(x=test_df['date'], y=test_df['true'], mode='lines', name='True'),
+            row=1, col=2
+        )
+
+        fig.add_trace(
+            go.Scatter(x=test_df['date'], y=test_df['pred'], mode='lines', name='Pred'),
+            row=1, col=2,
+        )
+
+        fig.write_html(loss_path)
 
         evaluations["Station"].append(station_name)
         evaluations["MAE"].append(mae)
