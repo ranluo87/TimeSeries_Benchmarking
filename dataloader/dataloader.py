@@ -80,7 +80,7 @@ class UnivariateMethaneHourly(Dataset):
             x_future = torch.tensor(self.targets[index], dtype=torch.float32)
 
             input_padding = torch.zeros_like(x_context)
-            freq = torch.tenor([self.freq_type], dtype=torch.long)
+            freq = torch.tensor([self.freq_type], dtype=torch.long)
 
             return x_context, input_padding, freq, x_future
         else:
