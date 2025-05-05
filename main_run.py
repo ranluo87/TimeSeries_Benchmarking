@@ -37,6 +37,7 @@ args = parser.parse_args()
 
 args.data_dir = "./datasets/select"
 
+
 def update_args_(params):
     dargs = vars(args)
     dargs.update(params)
@@ -89,36 +90,34 @@ if __name__ == '__main__':
             "Validation Loss": v_loss,
         })
 
-        loss_path = os.path.join(output_dir, "{}.html".format(station_name))
         # loss_df.to_csv(loss_path, index=False)
-
-        fig = make_subplots(rows=1, cols=2, title=station_name,
-                            subplot_titles=('Loss', 'Predictions'))
-
-        fig.add_trace(
+        loss_path = os.path.join(output_dir, "{}_Loss.html".format(station_name))
+        loss_fig = go.Figure()
+        loss_fig.add_trace(
             go.Scatter(x=loss_df.index, y=loss_df['Train Loss'], mode='lines', name='Train Loss'),
-            row=1, col=1
         )
-        fig.add_trace(
+        loss_fig.add_trace(
             go.Scatter(x=loss_df.index, y=loss_df['Validation Loss'], mode='lines', name='Validation Loss'),
-            row=1, col=1
         )
+        loss_fig.write_html(loss_path)
 
         test_df, mae, rmse = exp.test()
+
         test_path = os.path.join(output_dir, "{} Test Fitting.csv".format(station_name))
         test_df.to_csv(test_path, index=False)
 
-        fig.add_trace(
-            go.Scatter(x=test_df['date'], y=test_df['true'], mode='lines', name='True'),
-            row=1, col=2
+        fitting_fig = go.Figure()
+
+        fitting_fig.add_trace(
+            go.Scatter(x=test_df['date'], y=test_df['true'], mode='lines', name='First True'),
         )
 
-        fig.add_trace(
-            go.Scatter(x=test_df['date'], y=test_df['pred'], mode='lines', name='Pred'),
-            row=1, col=2,
+        fitting_fig.add_trace(
+            go.Scatter(x=test_df['date'], y=test_df['pred'], mode='lines', name='First Pred'),
         )
 
-        fig.write_html(loss_path)
+        fitting_path = os.path.join(output_dir, "{}_Fitting.html".format(station_name))
+        fitting_fig.write_html(fitting_path)
 
         evaluations["Station"].append(station_name)
         evaluations["MAE"].append(mae)

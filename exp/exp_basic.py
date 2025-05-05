@@ -7,7 +7,12 @@ class Exp_Basic(object):
     def __init__(self, args):
         self.args = args
         self.device = self._acquire_device()
-        self.model = self._build_model().to(self.device)
+        self.model = self._build_model()
+        if torch.cuda.device_count() > 1:
+            print('Model was parallelled on ', torch.cuda.device_count(), ' GPUs')
+            self.model = nn.DataParallel(self.model)
+
+        self.model.to(self.device)
         self.criterion = nn.MSELoss(reduction='mean')
 
     def _build_model(self):

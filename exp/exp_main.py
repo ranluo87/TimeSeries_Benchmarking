@@ -114,13 +114,11 @@ class Exp_Main(Exp_Basic):
                 true = test_dataset.inverse_transform(batch_y)
 
                 for batch in range(batch_x.shape[0]):
-                    preds.append(pred[batch][-1])
-                    trues.append(true[batch][-1])
-
-        dates = test_dataset.target_datestamp[:, 0]
+                    preds.append(np.mean(pred[batch]))
+                    trues.append(np.mean(true[batch]))
 
         test_df = pd.DataFrame({
-            'date': np.array(dates),
+            'date': np.array(test_dataset.target_datestamp[:, 0]),
             'pred': np.array(preds),
             'true': np.array(trues),
         })
