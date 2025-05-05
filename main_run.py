@@ -8,33 +8,34 @@ import argparse
 import optuna
 import numpy as np
 import os
-import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 parser = argparse.ArgumentParser()
 
 # Optimization
 parser.add_argument('--epochs', type=int, default=100, help='train epochs')
 parser.add_argument('--learning_rate', type=float, default=1e-4, help='optimizer learning rate')
-parser.add_argument('--batch_size', type=int, default=64, help='batch size')
+parser.add_argument('--batch_size', type=int, default=32, help='batch size')
 parser.add_argument('--hidden_size', type=int, default=32, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
 parser.add_argument('--model', type=str, default='RNN',
                     help='model name, options: [TimeMixer, TimesNet, iTransformer, RNN, MultiVar_RNN, T2V_Seq2Seq]')
-parser.add_argument('--rnn_model', type=str, default='GRU',
+parser.add_argument('--rnn_model', type=str, default='LSTM',
                     help='RNN model names, options=[LSTM, GRU]')
+
+# TimesFM parameters
 parser.add_argument('--timesfm', type=bool, default=False, help='TimesFM specific datasets')
+parser.add_argument('--freq_type', type=int, default=0)
+
 # Prediction Task
 parser.add_argument('--seq_len', type=int, default=512)
 parser.add_argument('--pred_len', type=int, default=24)
-parser.add_argument('--freq_type', type=int, default=0)
-
 args = parser.parse_args()
 
 args.data_dir = "./datasets/select"
-
 
 def update_args_(params):
     dargs = vars(args)
@@ -74,11 +75,11 @@ if __name__ == '__main__':
         args.data_file = file
         station_name = file.split(".")[0]
 
-        study = optuna.create_study(study_name=station_name, direction='minimize')
-        study.optimize(objective, n_trials=20)
-
-        print(study.best_params)
-        update_args_(study.best_params)
+        # study = optuna.create_study(study_name=station_name, direction='minimize')
+        # study.optimize(objective, n_trials=20)
+        #
+        # print(study.best_params)
+        # update_args_(study.best_params)
 
         exp = Exp_Main(args)
         _, t_loss, v_loss = exp.train()

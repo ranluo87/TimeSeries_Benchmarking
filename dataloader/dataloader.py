@@ -46,7 +46,7 @@ class UnivariateMethaneHourly(Dataset):
 
         df_raw = df_raw[border1:border2]
 
-        self.data = self.scaler.fit_transform(df_raw['methane'].values.reshape(-1, 1))
+        self.data = self.scaler.fit_transform(df_raw['target'].values.reshape(-1, 1))
         self.indices = df_raw.index
 
     def _slicing_data(self):
