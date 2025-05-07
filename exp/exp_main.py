@@ -7,7 +7,7 @@ from tqdm import tqdm
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from exp.exp_basic import Exp_Basic
 from dataloader.dataloader import UnivariateMethaneHourly
-from models import RNN
+from models import RNN, NBEATS
 
 import warnings
 
@@ -21,7 +21,8 @@ class Exp_Main(Exp_Basic):
 
     def _build_model(self):
         model_dict = {
-            "RNN": RNN,
+            'RNN': RNN,
+            'NBEATS': NBEATS,
         }
 
         model = model_dict[self.args.model].Model(self.args).float()
@@ -123,7 +124,7 @@ class Exp_Main(Exp_Basic):
         trues = np.hstack(trues)
 
         test_df = pd.DataFrame({
-            'date': np.array(test_dataset.target_datestamp[:, -1]),
+            'date': np.array(test_dataset.target_datestamp[:, 0]),
             'pred': preds,
             'true': trues,
         })

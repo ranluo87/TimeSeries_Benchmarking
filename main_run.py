@@ -21,8 +21,8 @@ parser.add_argument('--hidden_size', type=int, default=32, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
-parser.add_argument('--model', type=str, default='RNN',
-                    help='model name, options: [TimeMixer, TimesNet, iTransformer, RNN, MultiVar_RNN, T2V_Seq2Seq]')
+parser.add_argument('--model', type=str, default='NBEATS',
+                    help='model name, options: [RNN, NBEATS]')
 parser.add_argument('--rnn_model', type=str, default='LSTM',
                     help='RNN model names, options=[LSTM, GRU]')
 
@@ -66,7 +66,12 @@ def objective(trial):
 if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
 
-    output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
+    # output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
+    if args.model != 'RNN':
+        output_dir = "./results/{}".format(args.model)
+    else:
+        output_dir = "./results/{}".format(args.rnn_model)
+
     os.makedirs(output_dir, exist_ok=True)
 
     for file in os.listdir(args.data_dir):
@@ -75,10 +80,10 @@ if __name__ == '__main__':
 
         args.data_file = file
         station_name = file.split(".")[0]
-        print(f"Modeling {station_name}")
+        print(f"Modeling {station_name} with {args.model}")
 
         # study = optuna.create_study(study_name=station_name, direction='minimize')
-        # study.optimize(objective, n_trials=20)
+        # study.optimize(objective, n_trials=10)
         #
         # print(study.best_params)
         # update_args_(study.best_params)
