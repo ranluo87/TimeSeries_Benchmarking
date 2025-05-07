@@ -1,7 +1,6 @@
 import math
 
 import pandas as pd
-
 from exp.exp_main import Exp_Main
 
 import argparse
@@ -10,6 +9,7 @@ import numpy as np
 import os
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+from datetime import datetime
 
 parser = argparse.ArgumentParser()
 
@@ -64,7 +64,7 @@ def objective(trial):
 
 
 if __name__ == '__main__':
-    evaluations = {"Station": [], "MAE": [], "RMSE": []}
+    evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
 
     output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
     os.makedirs(output_dir, exist_ok=True)
@@ -75,6 +75,7 @@ if __name__ == '__main__':
 
         args.data_file = file
         station_name = file.split(".")[0]
+        print(f"Modeling {station_name}")
 
         # study = optuna.create_study(study_name=station_name, direction='minimize')
         # study.optimize(objective, n_trials=20)
@@ -83,7 +84,11 @@ if __name__ == '__main__':
         # update_args_(study.best_params)
 
         exp = Exp_Main(args)
+        tic = datetime.now()
         _, t_loss, v_loss = exp.train()
+        toc = datetime.now()
+
+        time_elapsed = (toc - tic) / 60
 
         loss_df = pd.DataFrame({
             "Train Loss": t_loss,
@@ -109,11 +114,11 @@ if __name__ == '__main__':
         fitting_fig = go.Figure()
 
         fitting_fig.add_trace(
-            go.Scatter(x=test_df['date'], y=test_df['true'], mode='lines', name='First True'),
+            go.Scatter(x=test_df['date'], y=test_df['true'], mode='lines', name='True'),
         )
 
         fitting_fig.add_trace(
-            go.Scatter(x=test_df['date'], y=test_df['pred'], mode='lines', name='First Pred'),
+            go.Scatter(x=test_df['date'], y=test_df['pred'], mode='lines', name='Pred'),
         )
 
         fitting_path = os.path.join(output_dir, "{}_Fitting.html".format(station_name))
@@ -122,6 +127,7 @@ if __name__ == '__main__':
         evaluations["Station"].append(station_name)
         evaluations["MAE"].append(mae)
         evaluations["RMSE"].append(rmse)
+        evaluations['Time Elapsed'].append(time_elapsed)
 
     eval_df = pd.DataFrame(evaluations)
     eval_path = os.path.join(output_dir, "{} Evaluations.csv".format(args.rnn_model))

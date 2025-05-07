@@ -48,6 +48,9 @@ class Exp_Main(Exp_Basic):
 
         pbar = tqdm(range(self.args.epochs))
 
+        # from torchinfo import summary
+        # summary(self.model, input_size=(self.args.batch_size, self.args.seq_len, 1))
+
         for epoch in pbar:
             self.model.train()
             epoch_loss = []
@@ -113,14 +116,16 @@ class Exp_Main(Exp_Basic):
                 pred = test_dataset.inverse_transform(outputs)
                 true = test_dataset.inverse_transform(batch_y)
 
-                for batch in range(batch_x.shape[0]):
-                    preds.append(np.mean(pred[batch]))
-                    trues.append(np.mean(true[batch]))
+                preds.append(pred[:, -1])
+                trues.append(true[:, -1])
+
+        preds = np.hstack(preds)
+        trues = np.hstack(trues)
 
         test_df = pd.DataFrame({
-            'date': np.array(test_dataset.target_datestamp[:, 0]),
-            'pred': np.array(preds),
-            'true': np.array(trues),
+            'date': np.array(test_dataset.target_datestamp[:, -1]),
+            'pred': preds,
+            'true': trues,
         })
 
         mse = mean_squared_error(trues, preds)

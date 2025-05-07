@@ -37,16 +37,14 @@ class UnivariateMethaneHourly(Dataset):
     def _read_data(self):
         df_raw = pd.read_csv(str(os.path.join(self.data_dir, self.data_file)),
                              parse_dates=True, skipinitialspace=True, index_col=0)
-
-        border1s = [0, int(0.7 * len(df_raw)), int(0.85 * len(df_raw))]
-        border2s = [int(0.7 * len(df_raw)), int(0.85 * len(df_raw)), int(len(df_raw))]
+        self.data = self.scaler.fit_transform(df_raw['target'].values.reshape(-1, 1))
+        border1s = [0, int(0.7 * len(self.data)), int(0.85 * len(self.data))]
+        border2s = [int(0.7 * len(self.data)), int(0.85 * len(self.data)), int(len(self.data))]
 
         border1 = border1s[self.type_flag]
         border2 = border2s[self.type_flag]
 
-        df_raw = df_raw[border1:border2]
-
-        self.data = self.scaler.fit_transform(df_raw['target'].values.reshape(-1, 1))
+        self.data = self.data[border1:border2]
         self.indices = df_raw.index
 
     def _slicing_data(self):
