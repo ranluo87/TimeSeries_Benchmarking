@@ -124,7 +124,7 @@ class Exp_Main(Exp_Basic):
         trues = np.hstack(trues)
 
         test_df = pd.DataFrame({
-            'date': np.array(test_dataset.target_datestamp[:, 0]),
+            'date': np.array(test_dataset.target_datestamp[:, -1]),
             'pred': preds,
             'true': trues,
         })

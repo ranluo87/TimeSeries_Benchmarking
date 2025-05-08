@@ -21,7 +21,7 @@ parser.add_argument('--hidden_size', type=int, default=32, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
-parser.add_argument('--model', type=str, default='NBEATS',
+parser.add_argument('--model', type=str, default='RNN',
                     help='model name, options: [RNN, NBEATS]')
 parser.add_argument('--rnn_model', type=str, default='LSTM',
                     help='RNN model names, options=[LSTM, GRU]')
