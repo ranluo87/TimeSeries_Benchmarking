@@ -117,8 +117,8 @@ class Exp_Main(Exp_Basic):
                 pred = test_dataset.inverse_transform(outputs)
                 true = test_dataset.inverse_transform(batch_y)
 
-                preds.append(pred[:, -1])
-                trues.append(true[:, -1])
+                preds.append(pred)
+                trues.append(true)
 
         preds = np.hstack(preds)
         trues = np.hstack(trues)

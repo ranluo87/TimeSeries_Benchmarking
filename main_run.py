@@ -64,7 +64,7 @@ def objective(trial):
 
 
 if __name__ == '__main__':
-    evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
+    evaluations = {"Station": [], "MAE": [], "RMSE": [], "Best Params": [], "Time Elapsed": []}
 
     # output_dir = "/home/ran/Desktop/PycharmProjects/TimeSeries_Benchmarking/results/{}".format(args.rnn_model)
     if args.model != 'RNN':
@@ -82,11 +82,11 @@ if __name__ == '__main__':
         station_name = file.split(".")[0]
         print(f"Modeling {station_name} with {args.model}")
 
-        # study = optuna.create_study(study_name=station_name, direction='minimize')
-        # study.optimize(objective, n_trials=10)
-        #
-        # print(study.best_params)
-        # update_args_(study.best_params)
+        study = optuna.create_study(study_name=station_name, direction='minimize')
+        study.optimize(objective, n_trials=10)
+
+        print(study.best_params)
+        update_args_(study.best_params)
 
         exp = Exp_Main(args)
         tic = datetime.now()
@@ -132,6 +132,7 @@ if __name__ == '__main__':
         evaluations["Station"].append(station_name)
         evaluations["MAE"].append(mae)
         evaluations["RMSE"].append(rmse)
+        evaluations['Best Params'].append(study.best_params)
         evaluations['Time Elapsed'].append(time_elapsed)
 
     eval_df = pd.DataFrame(evaluations)

@@ -32,8 +32,10 @@ class Model(nn.Module):
     def forward(self, x, x_mark=None):
         x = x.squeeze(dim=2)  # x as in shape of [Batch_size, Seq_Len, num_Features] in this case num_features=1
 
-        h_0 = Variable(torch.zeros(self.num_layers, self.args.batch_size).to(x.device))
-        c_0 = Variable(torch.zeros(self.num_layers, self.args.batch_size).to(x.device))
+        # h_0 = Variable(torch.zeros(self.num_layers, self.args.batch_size).to(x.device))
+        # c_0 = Variable(torch.zeros(self.num_layers, self.args.batch_size).to(x.device))
 
-        x, _ = self.rnn(x, (h_0, c_0))
+        x, _ = self.rnn(x)
+        x = F.relu(x[:, -1])
+
         return self.fc(x)
