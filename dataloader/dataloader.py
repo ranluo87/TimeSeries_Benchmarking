@@ -39,8 +39,8 @@ class UnivariateMethaneHourly(Dataset):
                              parse_dates=True, skipinitialspace=True, index_col=0)
         self.data = self.scaler.fit_transform(df_raw['target'].values.reshape(-1, 1))
 
-        border1s = [0, int(0.7 * len(self.data)), int(0.85 * len(self.data))]
-        border2s = [int(0.7 * len(self.data)), int(0.85 * len(self.data)), int(len(self.data))]
+        border1s = [0, int(0.6 * len(self.data)), int(0.75 * len(self.data))]
+        border2s = [int(0.6 * len(self.data)), int(0.75 * len(self.data)), int(len(self.data))]
 
         border1 = border1s[self.type_flag]
         border2 = border2s[self.type_flag]

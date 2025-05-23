@@ -11,14 +11,18 @@ class Model(nn.Module):
         self.seq_len = args.seq_len
         self.pred_len = args.pred_len
         self.hidden_size = args.hidden_size
+        self.device = args.device
 
         self.nbeats = NBeatsNet(
             stack_types=[NBeatsNet.GENERIC_BLOCK, NBeatsNet.GENERIC_BLOCK],
             forecast_length=self.pred_len,
             backcast_length=self.seq_len,
             hidden_layer_units=self.hidden_size,
+            share_weights_in_stack=True,
+            nb_blocks_per_stack=2,
+            device=self.device
         )
 
     def forward(self, x, x_mark=None):
-       _, forecast = self.nbeats(x)
-       return forecast
+        _, forecast = self.nbeats(x)
+        return forecast

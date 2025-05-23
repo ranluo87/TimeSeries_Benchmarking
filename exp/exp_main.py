@@ -53,7 +53,7 @@ class Exp_Main(Exp_Basic):
         # summary(self.model, input_size=(self.args.batch_size, self.args.seq_len, 1))
 
         for epoch in pbar:
-            self.model.train()
+            self.model.train(True)
             epoch_loss = []
 
             for i, (batch_x, batch_y) in enumerate(train_dataloader):
@@ -102,8 +102,8 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
 
-        self.model.eval()
         with torch.no_grad():
+            self.model.eval()
             for i, (batch_x, batch_y) in enumerate(test_dataloader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().squeeze().to(self.device)
@@ -117,8 +117,8 @@ class Exp_Main(Exp_Basic):
                 pred = test_dataset.inverse_transform(outputs)
                 true = test_dataset.inverse_transform(batch_y)
 
-                preds.append(pred)
-                trues.append(true)
+                preds.append(pred[:, -1])
+                trues.append(true[:, -1])
 
         preds = np.hstack(preds)
         trues = np.hstack(trues)
