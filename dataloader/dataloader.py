@@ -17,7 +17,7 @@ class UnivariateMethaneHourly(Dataset):
         self.data_file = args.data_file
 
         self.seq_len = args.seq_len
-        self.pred_len = args.pred_len
+        self.pred_len = args.pred_len if args.pred_method == 'static' else 1
 
         self.timesfm = args.timesfm
         if self.timesfm:
@@ -37,10 +37,11 @@ class UnivariateMethaneHourly(Dataset):
     def _read_data(self):
         df_raw = pd.read_csv(str(os.path.join(self.data_dir, self.data_file)),
                              parse_dates=True, skipinitialspace=True, index_col=0)
+
         self.data = self.scaler.fit_transform(df_raw['target'].values.reshape(-1, 1))
 
-        border1s = [0, int(0.6 * len(self.data)), int(0.75 * len(self.data))]
-        border2s = [int(0.6 * len(self.data)), int(0.75 * len(self.data)), int(len(self.data))]
+        border1s = [0, int(0.7 * len(self.data)), int(0.85 * len(self.data))]
+        border2s = [int(0.7 * len(self.data)), int(0.85 * len(self.data)), int(len(self.data))]
 
         border1 = border1s[self.type_flag]
         border2 = border2s[self.type_flag]

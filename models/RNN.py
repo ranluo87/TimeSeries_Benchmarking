@@ -9,7 +9,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.args = args
         # self.seq_len = args.seq_len
-        self.pred_len = args.pred_len
+        self.pred_len = args.pred_len if args.pred_method == 'static' else 1
         self.num_layers = args.num_layers
         self.hidden_size = args.hidden_size
 
@@ -31,10 +31,10 @@ class Model(nn.Module):
             )
         elif self.args.rnn_model == 'GRU':
             self.rnn = nn.GRU(
-                input_size=self.seq_len,
+                input_size=1,
                 hidden_size=self.hidden_size,
                 num_layers=self.num_layers,
-                batch_first=False
+                batch_first=True
             )
 
         self.fc = nn.Linear(self.hidden_size, self.pred_len)

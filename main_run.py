@@ -31,7 +31,9 @@ parser.add_argument('--timesfm', type=bool, default=False, help='TimesFM specifi
 parser.add_argument('--freq_type', type=int, default=0)
 
 # Prediction Task
-parser.add_argument('--seq_len', type=int, default=512)
+parser.add_argument('--seq_len', type=int, default=256)
+parser.add_argument('--pred_method', type=str, default='rolling',
+                    help='prediction method, options: [static, rolling]')
 parser.add_argument('--pred_len', type=int, default=24)
 args = parser.parse_args()
 
@@ -49,9 +51,9 @@ def objective(trial):
     #     'batch_size': trial.suggest_categorical('batch_size', [64, 128]),
     # }
     params = {
-        'learning_rate': trial.suggest_float('learning_rate', 1e-5, 1e-3),
+        # 'learning_rate': trial.suggest_float('learning_rate', 1e-5, 1e-3),
         'batch_size': trial.suggest_categorical('batch_size', [32, 64]),
-        'seq_len': trial.suggest_int('seq_len', 512, 1024, 128),
+        'seq_len': trial.suggest_int('seq_len', 256, 1024, 128),
         'hidden_size': trial.suggest_categorical('hidden_size', [16, 32, 64])
     }
 
@@ -60,7 +62,7 @@ def objective(trial):
     exp = Exp_Main(args)
     _, train_loss, val_loss = exp.train()
 
-    return val_loss[-1]
+    return train_loss[-1], val_loss[-1]
 
 
 if __name__ == '__main__':
@@ -90,11 +92,20 @@ if __name__ == '__main__':
             else:
                 print(f"Modeling {station_name} with {args.model}")
 
-            study = optuna.create_study(study_name=station_name, direction='minimize')
-            study.optimize(objective, n_trials=10)
+            study = optuna.create_study(study_name=station_name, directions=['minimize', 'minimize'])
+            study.optimize(objective, n_trials=2, gc_after_trial=True)
 
-            print(study.best_params)
-            update_args_(study.best_params)
+            best_trial = study.trials[0]
+
+            for trail in study.trials:
+                train_loss = trail.values[0]
+                val_loss = trail.values[1]
+
+                if train_loss < val_loss < best_trial.values[1]:
+                    best_trial = trail
+
+            print(best_trial.params)
+            update_args_(best_trial.params)
 
             exp = Exp_Main(args)
             tic = time.time()
@@ -140,7 +151,7 @@ if __name__ == '__main__':
             evaluations["Station"].append(station_name)
             evaluations["MAE"].append(mae)
             evaluations["RMSE"].append(rmse)
-            evaluations['Best Params'].append(study.best_params)
+            evaluations['Best Params'].append(best_trial.params)
             evaluations['Time Elapsed'].append(time_elapsed)
 
         eval_df = pd.DataFrame(evaluations)
