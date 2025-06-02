@@ -6,6 +6,7 @@ import time
 from tqdm import tqdm
 from torch.utils.data import Dataset
 from sklearn.preprocessing import MinMaxScaler
+from utils.time_features import time_features
 import warnings
 import torch
 warnings.filterwarnings("ignore")
@@ -53,17 +54,26 @@ class UnivariateMethaneHourly(Dataset):
         self.features = []
         self.targets = []
         self.target_datestamp = []
+        self.feature_marks = []
+        self.target_marks = []
+
+        date_feature_stamps = time_features(self.indices, freq="h").transpose(1, 0)
 
         for i in tqdm(range(0, len(self.data) - self.seq_len - self.pred_len + 1)):
             end_idx = i + self.seq_len
             self.features.append(self.data[i:end_idx])
             self.targets.append(self.data[end_idx:end_idx + self.pred_len])
 
+            self.feature_marks.append(date_feature_stamps[i:end_idx])
+            self.target_marks.append(date_feature_stamps[end_idx:end_idx + self.pred_len])
+
             date_strings = self.indices[end_idx:end_idx + self.pred_len]
             self.target_datestamp.append(date_strings)
 
         self.features = np.array(self.features)
         self.targets = np.array(self.targets)
+        self.feature_marks = np.array(self.feature_marks)
+        self.target_marks = np.array(self.target_marks)
         self.target_datestamp = np.array(self.target_datestamp)
 
     def __len__(self):
@@ -84,4 +94,4 @@ class UnivariateMethaneHourly(Dataset):
 
             return x_context, input_padding, freq, x_future
         else:
-            return self.features[index], self.targets[index]
+            return self.features[index], self.targets[index], self.feature_marks[index], self.target_marks[index]

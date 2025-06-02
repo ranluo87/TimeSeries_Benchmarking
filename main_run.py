@@ -21,10 +21,26 @@ parser.add_argument('--hidden_size', type=int, default=64, help='hidden size')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
-parser.add_argument('--model', type=str, default='RNN',
-                    help='model name, options: [RNN, NBEATS]')
+parser.add_argument('--model', type=str, default='iTransformer',
+                    help='model name, options: [RNN, NBEATS, iTransformer]')
 parser.add_argument('--rnn_model', type=str, default='LSTM',
                     help='RNN model names, options=[LSTM, GRU]')
+
+# Model Define for iTransformer
+parser.add_argument('--d_model', type=int, default=32, help='dimension of model')
+parser.add_argument('--d_ff', type=int, default=32, help='dimension of fcn')
+parser.add_argument('--dropout', type=float, default=0.1, help='dropout')
+parser.add_argument('--e_layers', type=int, default=4, help='num of encoder layers')
+parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
+parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
+parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
+
+# Model Define for TimesNet
+parser.add_argument('--top_k', type=int, default=5, help='for TimesBlock')
+parser.add_argument('--num_kernels', type=int, default=6, help='for Inception')
+parser.add_argument('--enc_in', type=int, default=1, help='encoder input size')
+parser.add_argument('--dec_in', type=int, default=1, help='decoder input size')
+# parser.add_argument('--c_out', type=int, default=1, help='output size')
 
 # TimesFM parameters
 parser.add_argument('--timesfm', type=bool, default=False, help='TimesFM specific datasets')
@@ -59,25 +75,25 @@ def objective(trial):
 
     update_args_(params)
 
-    exp = Exp_Main(args)
-    _, train_loss, val_loss = exp.train()
+    trial_exp = Exp_Main(args)
+    _, t_loss, v_loss = trial_exp.train()
 
-    return train_loss[-1], val_loss[-1]
+    return t_loss[-1], v_loss[-1]
 
 
 if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": [], "Best Params": [], "Time Elapsed": []}
     # evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
-    models = ['LSTM', 'GRU', 'NBEATS']
-
+    # models = ['LSTM', 'GRU', 'NBEATS']
+    models = ['TimesNet']
     for model in models:
-        if model == 'NBEATS':
-            args.model = model
-            output_dir = "./results/{}".format(args.model)
-        else:
+        if model == 'RNN':
             args.model = 'RNN'
             args.rnn_model = model
             output_dir = "./results/{}".format(args.rnn_model)
+        else:
+            args.model = model
+            output_dir = "./results/{}".format(args.model)
 
         os.makedirs(output_dir, exist_ok=True)
 
@@ -109,14 +125,14 @@ if __name__ == '__main__':
 
             exp = Exp_Main(args)
             tic = time.time()
-            _, t_loss, v_loss = exp.train()
+            _, train_loss, val_loss = exp.train()
             toc = time.time()
 
             time_elapsed = (toc - tic) / 60
 
             loss_df = pd.DataFrame({
-                "Train Loss": t_loss,
-                "Validation Loss": v_loss,
+                "Train Loss": train_loss,
+                "Validation Loss": val_loss,
             })
 
             # loss_df.to_csv(loss_path, index=False)
