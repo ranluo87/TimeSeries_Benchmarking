@@ -7,7 +7,7 @@ from tqdm import tqdm
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from exp.exp_basic import Exp_Basic
 from dataloader.dataloader import UnivariateMethaneHourly
-from models import RNN, NBEATS
+from models import RNN, NBEATS, iTransformer, TimesNet
 
 import warnings
 
@@ -23,6 +23,8 @@ class Exp_Main(Exp_Basic):
         model_dict = {
             'RNN': RNN,
             'NBEATS': NBEATS,
+            'iTransformer': iTransformer,
+            'TimesNet': TimesNet
         }
 
         model = model_dict[self.args.model].Model(self.args).float()
@@ -53,16 +55,20 @@ class Exp_Main(Exp_Basic):
         # summary(self.model, input_size=(self.args.batch_size, self.args.seq_len, 1))
 
         for epoch in pbar:
-            self.model.train()
+            self.model.train(True)
             epoch_loss = []
 
-            for i, (batch_x, batch_y) in enumerate(train_dataloader):
+            for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(train_dataloader):
                 optimizer.zero_grad()
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().squeeze().to(self.device)
 
-                output_y = self.model(batch_x)
+                if self.args.model != 'RNN' or self.args.model != 'NBEATS':
+                    batch_x_mark = batch_x_mark.float().to(self.device)
+                else:
+                    batch_x_mark = None
 
+                output_y = self.model(batch_x, batch_x_mark)
                 step_loss = self.criterion(output_y, batch_y)
 
                 epoch_loss.append(step_loss.item())
@@ -73,11 +79,16 @@ class Exp_Main(Exp_Basic):
             epoch_val_loss = []
 
             with torch.no_grad():
-                for i, (batch_x_val, batch_y_val) in enumerate(valid_dataloader):
+                for i, (batch_x_val, batch_y_val, batch_x_val_mark, _) in enumerate(valid_dataloader):
                     batch_x_val = batch_x_val.float().to(self.device)
                     batch_y_val = batch_y_val.float().squeeze().to(self.device)
 
-                    output_y_val = self.model(batch_x_val)
+                    if self.args.model != 'RNN' or self.args.model != 'NBEATS':
+                        batch_x_val_mark = batch_x_val_mark.float().to(self.device)
+                    else:
+                        batch_x_val_mark = None
+
+                    output_y_val = self.model(batch_x_val, batch_x_val_mark)
 
                     val_step_loss = self.criterion(output_y_val, batch_y_val)
                     epoch_val_loss.append(val_step_loss.item())
@@ -102,13 +113,18 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
 
-        self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y) in enumerate(test_dataloader):
+            self.model.eval()
+            for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(test_dataloader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().squeeze().to(self.device)
 
-                outputs = self.model(batch_x)
+                if self.args.model != 'RNN' or self.args.model != 'NBEATS':
+                    batch_x_mark = batch_x_mark.float().to(self.device)
+                else:
+                    batch_x_mark = None
+
+                outputs = self.model(batch_x, batch_x_mark)
 
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
@@ -124,7 +140,7 @@ class Exp_Main(Exp_Basic):
         trues = np.hstack(trues)
 
         test_df = pd.DataFrame({
-            'date': np.array(test_dataset.target_datestamp[:, 0]),
+            'date': np.array(test_dataset.target_datestamp[:, -1]),
             'pred': preds,
             'true': trues,
         })
