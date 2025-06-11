@@ -23,16 +23,38 @@ for file in os.listdir(data_dir):
     date_max = methane_df.index.max()
 
     filled_df = methane_df.reindex(pd.date_range(date_min, date_max, freq='h'), fill_value=np.nan)
-    filled_df = filled_df.interpolate()
+    filled_df['target'] = filled_df['target'].interpolate(method='linear')
 
-    first = methane_df[date_min:gap_start_date]
-    middle = methane_df[gap_start_date:gap_end_date]
-    last = methane_df[gap_end_date:date_max]
+    if int(len(filled_df[gap_start_date:gap_end_date])) > 24 * 100:
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=first.index, y=first['target']))
-    fig.add_trace(go.Scatter(x=middle.index, y=middle['target']))
-    fig.add_trace(go.Scatter(x=last.index, y=last['target']))
-    fig.update_layout(title='{}'.format(file.split('.')[0]))
-    fig.show()
+        first = filled_df[date_min:gap_start_date]
+        middle = filled_df[gap_start_date:gap_end_date]
+        last = filled_df[gap_end_date:date_max]
+
+        if len(first) > len(last):
+            continue
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=first.index, y=first['target']))
+        fig.add_trace(go.Scatter(x=middle.index, y=middle['target']))
+        fig.add_trace(go.Scatter(x=last.index, y=last['target']))
+        fig.update_layout(title='{}'.format(file.split('.')[0]))
+        fig.show()
+
+        filled_df = filled_df[gap_end_date:date_max]
+
+    filled_df.drop(columns=['time_diff'], inplace=True)
+    filled_df.to_csv('./CH4_H/{}'.format(file))
+
+
+    # first = filled_df[date_min:gap_start_date]
+    # middle = filled_df[gap_start_date:gap_end_date]
+    # last = filled_df[gap_end_date:date_max]
+    #
+    # fig = go.Figure()
+    # fig.add_trace(go.Scatter(x=first.index, y=first['target']))
+    # fig.add_trace(go.Scatter(x=middle.index, y=middle['target']))
+    # fig.add_trace(go.Scatter(x=last.index, y=last['target']))
+    # fig.update_layout(title='{}'.format(file.split('.')[0]))
+    # fig.show()
 

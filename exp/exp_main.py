@@ -61,7 +61,7 @@ class Exp_Main(Exp_Basic):
             for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(train_dataloader):
                 optimizer.zero_grad()
                 batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float().squeeze().to(self.device)
+                batch_y = batch_y.float().to(self.device)
 
                 if self.args.model != 'RNN' or self.args.model != 'NBEATS':
                     batch_x_mark = batch_x_mark.float().to(self.device)
@@ -81,7 +81,7 @@ class Exp_Main(Exp_Basic):
             with torch.no_grad():
                 for i, (batch_x_val, batch_y_val, batch_x_val_mark, _) in enumerate(valid_dataloader):
                     batch_x_val = batch_x_val.float().to(self.device)
-                    batch_y_val = batch_y_val.float().squeeze().to(self.device)
+                    batch_y_val = batch_y_val.float().to(self.device)
 
                     if self.args.model != 'RNN' or self.args.model != 'NBEATS':
                         batch_x_val_mark = batch_x_val_mark.float().to(self.device)
@@ -117,7 +117,7 @@ class Exp_Main(Exp_Basic):
             self.model.eval()
             for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(test_dataloader):
                 batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float().squeeze().to(self.device)
+                batch_y = batch_y.float().to(self.device)
 
                 if self.args.model != 'RNN' or self.args.model != 'NBEATS':
                     batch_x_mark = batch_x_mark.float().to(self.device)

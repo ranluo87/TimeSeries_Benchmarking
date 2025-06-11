@@ -48,12 +48,12 @@ parser.add_argument('--freq_type', type=int, default=0)
 
 # Prediction Task
 parser.add_argument('--seq_len', type=int, default=256)
-parser.add_argument('--pred_method', type=str, default='rolling',
+parser.add_argument('--pred_method', type=str, default='static',
                     help='prediction method, options: [static, rolling]')
 parser.add_argument('--pred_len', type=int, default=24)
 args = parser.parse_args()
 
-args.data_dir = "./datasets"
+args.data_dir = "./datasets/select"
 
 
 def update_args_(params):
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": [], "Best Params": [], "Time Elapsed": []}
     # evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
     # models = ['LSTM', 'GRU', 'NBEATS']
-    models = ['TimesNet']
+    models = ['iTransformer', 'NBEATS', 'LSTM', 'GRU']
     for model in models:
         if model == 'RNN':
             args.model = 'RNN'
@@ -109,7 +109,7 @@ if __name__ == '__main__':
                 print(f"Modeling {station_name} with {args.model}")
 
             study = optuna.create_study(study_name=station_name, directions=['minimize', 'minimize'])
-            study.optimize(objective, n_trials=2, gc_after_trial=True)
+            study.optimize(objective, n_trials=10, gc_after_trial=True)
 
             best_trial = study.trials[0]
 
