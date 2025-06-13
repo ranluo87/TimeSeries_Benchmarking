@@ -88,21 +88,21 @@ if __name__ == '__main__':
     # evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
     models = ['LSTM', 'GRU', 'iTransformer', 'NBEATS']
     for model in models:
-        if model in ['LSTM', 'GRU']:
-            args.model = 'RNN'
-            args.rnn_model = model
-            output_dir = "./results/{}".format(args.rnn_model)
-        else:
-            args.model = model
-            output_dir = "./results/{}".format(args.model)
-
         for file in os.listdir(args.data_dir):
             if not file.endswith(".csv"):
                 continue
 
             args.data_file = file
             station_name = file.split(".")[0]
-            output_dir = output_dir + "/{}".format(station_name)
+
+            if model in ['LSTM', 'GRU']:
+                args.model = 'RNN'
+                args.rnn_model = model
+                output_dir = "./results/{}/{}".format(args.rnn_model, station_name)
+            else:
+                args.model = model
+                output_dir = "./results/{}/{}".format(args.model, station_name)
+
             os.makedirs(output_dir, exist_ok=True)
 
             if args.model == 'RNN':
