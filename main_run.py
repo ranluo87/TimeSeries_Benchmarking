@@ -18,6 +18,7 @@ parser.add_argument('--epochs', type=int, default=100, help='train epochs')
 parser.add_argument('--learning_rate', type=float, default=1e-4, help='optimizer learning rate')
 parser.add_argument('--batch_size', type=int, default=32, help='batch size')
 parser.add_argument('--hidden_size', type=int, default=64, help='hidden size')
+parser.add_argument('--lambda_l1', type=float, default=0.01, help='LASSO Regularization parameter')
 
 # Model Parameters
 parser.add_argument('--num_layers', type=int, default=2, help='number of layers')
@@ -53,7 +54,7 @@ parser.add_argument('--pred_method', type=str, default='static',
 parser.add_argument('--pred_len', type=int, default=24)
 args = parser.parse_args()
 
-args.data_dir = "./datasets/select"
+args.data_dir = "./datasets/CH4_H"
 
 
 def update_args_(params):
@@ -70,7 +71,8 @@ def objective(trial):
         # 'learning_rate': trial.suggest_float('learning_rate', 1e-5, 1e-3),
         'batch_size': trial.suggest_categorical('batch_size', [32, 64]),
         'seq_len': trial.suggest_int('seq_len', 256, 1024, 128),
-        'hidden_size': trial.suggest_categorical('hidden_size', [16, 32, 64])
+        'hidden_size': trial.suggest_categorical('hidden_size', [32, 64, 128]),
+        'lambda_l1': trial.suggest_categorical('lambda_l1', [1e-4, 1e-3, 1e-2]),
     }
 
     update_args_(params)
@@ -78,16 +80,15 @@ def objective(trial):
     trial_exp = Exp_Main(args)
     _, t_loss, v_loss = trial_exp.train()
 
-    return t_loss[-1], v_loss[-1]
+    return v_loss[-1]
 
 
 if __name__ == '__main__':
     evaluations = {"Station": [], "MAE": [], "RMSE": [], "Best Params": [], "Time Elapsed": []}
     # evaluations = {"Station": [], "MAE": [], "RMSE": [], "Time Elapsed": []}
-    # models = ['LSTM', 'GRU', 'NBEATS']
-    models = ['iTransformer', 'NBEATS', 'LSTM', 'GRU']
+    models = ['LSTM', 'GRU', 'iTransformer', 'NBEATS']
     for model in models:
-        if model == 'RNN':
+        if model in ['LSTM', 'GRU']:
             args.model = 'RNN'
             args.rnn_model = model
             output_dir = "./results/{}".format(args.rnn_model)
@@ -95,33 +96,24 @@ if __name__ == '__main__':
             args.model = model
             output_dir = "./results/{}".format(args.model)
 
-        os.makedirs(output_dir, exist_ok=True)
-
         for file in os.listdir(args.data_dir):
             if not file.endswith(".csv"):
                 continue
 
             args.data_file = file
             station_name = file.split(".")[0]
+            output_dir = output_dir + "/{}".format(station_name)
+            os.makedirs(output_dir, exist_ok=True)
+
             if args.model == 'RNN':
                 print(f"Modeling {station_name} with {args.rnn_model}")
             else:
                 print(f"Modeling {station_name} with {args.model}")
 
-            study = optuna.create_study(study_name=station_name, directions=['minimize', 'minimize'])
+            study = optuna.create_study(study_name=station_name, direction='minimize')
             study.optimize(objective, n_trials=10, gc_after_trial=True)
-
-            best_trial = study.trials[0]
-
-            for trail in study.trials:
-                train_loss = trail.values[0]
-                val_loss = trail.values[1]
-
-                if train_loss < val_loss < best_trial.values[1]:
-                    best_trial = trail
-
-            print(best_trial.params)
-            update_args_(best_trial.params)
+            print(study.best_trial.params)
+            update_args_(study.best_trial.params)
 
             exp = Exp_Main(args)
             tic = time.time()
@@ -167,7 +159,7 @@ if __name__ == '__main__':
             evaluations["Station"].append(station_name)
             evaluations["MAE"].append(mae)
             evaluations["RMSE"].append(rmse)
-            evaluations['Best Params'].append(best_trial.params)
+            evaluations['Best Params'].append(study.best_trial.params)
             evaluations['Time Elapsed'].append(time_elapsed)
 
         eval_df = pd.DataFrame(evaluations)

@@ -10,7 +10,6 @@ from dataloader.dataloader import UnivariateMethaneHourly
 from models import RNN, NBEATS, iTransformer, TimesNet
 
 import warnings
-
 warnings.filterwarnings("ignore")
 
 
@@ -40,6 +39,10 @@ class Exp_Main(Exp_Basic):
 
         return dataset, dataloader
 
+    def l1_regularization(self):
+        l1_norm = sum(p.abs().sum() for p in self.model.parameters())
+        return self.args.lambda_l1 * l1_norm
+
     def train(self):
         train_dataset, train_dataloader = self._get_data('train')
         valid_dataset, valid_dataloader = self._get_data('val')
@@ -55,21 +58,21 @@ class Exp_Main(Exp_Basic):
         # summary(self.model, input_size=(self.args.batch_size, self.args.seq_len, 1))
 
         for epoch in pbar:
-            self.model.train(True)
+            self.model.train()
             epoch_loss = []
 
             for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(train_dataloader):
                 optimizer.zero_grad()
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
-
-                if self.args.model != 'RNN' or self.args.model != 'NBEATS':
-                    batch_x_mark = batch_x_mark.float().to(self.device)
-                else:
-                    batch_x_mark = None
+                batch_x_mark = batch_x_mark.float().to(self.device)
 
                 output_y = self.model(batch_x, batch_x_mark)
+                output_y = output_y.reshape(batch_y.shape)
                 step_loss = self.criterion(output_y, batch_y)
+
+                if self.args.lambda_l1 > 0:
+                    step_loss += self.l1_regularization()
 
                 epoch_loss.append(step_loss.item())
                 step_loss.backward()
@@ -82,15 +85,12 @@ class Exp_Main(Exp_Basic):
                 for i, (batch_x_val, batch_y_val, batch_x_val_mark, _) in enumerate(valid_dataloader):
                     batch_x_val = batch_x_val.float().to(self.device)
                     batch_y_val = batch_y_val.float().to(self.device)
-
-                    if self.args.model != 'RNN' or self.args.model != 'NBEATS':
-                        batch_x_val_mark = batch_x_val_mark.float().to(self.device)
-                    else:
-                        batch_x_val_mark = None
+                    batch_x_val_mark = batch_x_val_mark.float().to(self.device)
 
                     output_y_val = self.model(batch_x_val, batch_x_val_mark)
-
+                    output_y_val = output_y_val.reshape(batch_y_val.shape)
                     val_step_loss = self.criterion(output_y_val, batch_y_val)
+
                     epoch_val_loss.append(val_step_loss.item())
 
             pbar.set_postfix({
@@ -118,16 +118,14 @@ class Exp_Main(Exp_Basic):
             for i, (batch_x, batch_y, batch_x_mark, _) in enumerate(test_dataloader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
-
-                if self.args.model != 'RNN' or self.args.model != 'NBEATS':
-                    batch_x_mark = batch_x_mark.float().to(self.device)
-                else:
-                    batch_x_mark = None
+                batch_x_mark = batch_x_mark.float().to(self.device)
 
                 outputs = self.model(batch_x, batch_x_mark)
 
-                outputs = outputs.detach().cpu().numpy()
-                batch_y = batch_y.detach().cpu().numpy()
+                outputs = outputs.reshape(batch_y.shape)
+
+                outputs = outputs.detach().cpu().numpy().squeeze()
+                batch_y = batch_y.detach().cpu().numpy().squeeze()
 
                 # [batch_size, pred_len]
                 pred = test_dataset.inverse_transform(outputs)
